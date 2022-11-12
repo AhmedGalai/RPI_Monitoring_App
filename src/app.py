@@ -1,5 +1,8 @@
+#!/usr/bin/python3
+
 from flask import Flask, redirect, url_for, render_template, Markup
 #import threading
+
 
 app = Flask(__name__)
 

@@ -1,0 +1,2 @@
+Zeit; Feuchtigkeitsgrad; Temperatur; Licht An; Befeuchter An; Ventil An;
+
