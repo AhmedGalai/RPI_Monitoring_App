@@ -1,3 +1,5 @@
 flask run --host=0.0.0.0
 sudo pip3 install --install-option="--force-pi" Adafruit_DHT
 sudo python3 -m pip install --upgrade pip setuptools wheel
+pip install RPi.GPIO
+pip install Adafruit-DHT
