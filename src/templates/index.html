@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>PILS_BEOBACHTUNG_APP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
+  <script type="text/javascript" src="{{ url_for('static', filename='index.js') }}" defer></script>
+</head>
+<body>
+  <div id="temperatur">
+    <div id="temperatur-icon" class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-thermometer-snow" viewBox="0 0 16 16">
+        <path d="M5 12.5a1.5 1.5 0 1 1-2-1.415V9.5a.5.5 0 0 1 1 0v1.585A1.5 1.5 0 0 1 5 12.5z"/>
+        <path d="M1 2.5a2.5 2.5 0 0 1 5 0v7.55a3.5 3.5 0 1 1-5 0V2.5zM3.5 1A1.5 1.5 0 0 0 2 2.5v7.987l-.167.15a2.5 2.5 0 1 0 3.333 0L5 10.486V2.5A1.5 1.5 0 0 0 3.5 1zm5 1a.5.5 0 0 1 .5.5v1.293l.646-.647a.5.5 0 0 1 .708.708L9 5.207v1.927l1.669-.963.495-1.85a.5.5 0 1 1 .966.26l-.237.882 1.12-.646a.5.5 0 0 1 .5.866l-1.12.646.884.237a.5.5 0 1 1-.26.966l-1.848-.495L9.5 8l1.669.963 1.849-.495a.5.5 0 1 1 .258.966l-.883.237 1.12.646a.5.5 0 0 1-.5.866l-1.12-.646.237.883a.5.5 0 1 1-.966.258L10.67 9.83 9 8.866v1.927l1.354 1.353a.5.5 0 0 1-.708.708L9 12.207V13.5a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z"/>
+      </svg>
+    </div>
+    <span class="text">20°C</span>
+  </div>
+  <div id="feuchtigkeit">
+    <div id="feuchtigkeit-icon" class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-droplet-half" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M7.21.8C7.69.295 8 0 8 0c.109.363.234.708.371 1.038.812 1.946 2.073 3.35 3.197 4.6C12.878 7.096 14 8.345 14 10a6 6 0 0 1-12 0C2 6.668 5.58 2.517 7.21.8zm.413 1.021A31.25 31.25 0 0 0 5.794 3.99c-.726.95-1.436 2.008-1.96 3.07C3.304 8.133 3 9.138 3 10c0 0 2.5 1.5 5 .5s5-.5 5-.5c0-1.201-.796-2.157-2.181-3.7l-.03-.032C9.75 5.11 8.5 3.72 7.623 1.82z"/>
+        <path fill-rule="evenodd" d="M4.553 7.776c.82-1.641 1.717-2.753 2.093-3.13l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.894-.448z"/>
+      </svg>
+    </div>
+    <span class="text">60%</span>
+  </div>
+  <div id="Kontroll">
+    <div class="container">
+      <span class="text">UV_Licht</span>
+      <input type="radio" name="licht" checked><span>Auto</span>
+      <input type="radio" name="licht"><span>An</span>
+      <input type="radio" name="licht"><span>Aus</span>
+    </div>
+    <div class="container">
+      <span class="text">Ventilator</span>
+      <input type="radio" name="ventil" checked><span>Auto</span>
+      <input type="radio" name="ventil"><span>An</span>
+      <input type="radio" name="ventil"><span>Aus</span>
+    </div>
+    <div class="container">
+      <span class="text">Befeuchter</span>
+      <input type="radio" name="befeuchter" checked><span>Auto</span>
+      <input type="radio" name="befeuchter"><span>An</span>
+      <input type="radio" name="befeuchter"><span>Aus</span>
+    </div>
+  </div>
+</body>
+</html>

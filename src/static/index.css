@@ -1,0 +1,61 @@
+:root{
+  --clr-blue: hsl(220,75%,50%);
+  --clr-red: hsl(10,75%,50%);
+}
+
+*, *::before, *::after{
+  box-sizing: border-box;
+  margin: 0;
+  inset: 0;
+  color: inherit;
+}
+
+html {
+  color: black;
+  font-size: 1rem;
+}
+body{
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  grid-template-rows: 1fr 1fr 2fr;
+}
+
+.icon{
+  width: 4rem;
+  aspect-ratio: 1;
+  padding: 0.5rem;
+}
+
+#feuchtigkeit-icon>svg{
+  color: var(--clr-blue);
+}
+
+#temperatur-icon>svg{
+  color: var(--clr-red);
+}
+
+.text {
+  text-align: center;
+  font-size: 1.5em;
+}
+
+#temperatur>.text{
+  
+}
+
+#feuchtigkeit>.text{
+  
+}
+.container{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+}
+
+#kontroll>.container>.text{
+  position: absolute;
+}
