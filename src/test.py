@@ -3,7 +3,7 @@ import datetime
 
 
 def update_txt_log(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
-	line = f"\n| {timestamp} |        {humidity}%         |    {temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
+	line = f"\n| {timestamp} |       {'0' if humidity < 10}{humidity}%         |   {'0' if temperature < 10}{temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
 	with open("log.txt",'a') as file :
 		file.write(line)
 
