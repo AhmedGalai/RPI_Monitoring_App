@@ -17,6 +17,8 @@ LUFT_BEFEUCHTER_PIN = 11
 MAX_HUMIDITY = 90
 MIN_HUMIDITY = 50
 
+PAUSE_ZEIT = 60  #zeit zwischen messungen in sekunden
+
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(LICHT_PIN, GPIO.OUT)
 GPIO.setup(VENTIL_PIN, GPIO.OUT)
@@ -32,7 +34,7 @@ befeuchter_an = True
 ## functions
 
 def update_txt_log(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
-	line = f"{timestamp}; {humidity}; {temperature}; {light_on}; {moisterizer_on}; {ventil_on};\n"
+	line = f"\n| {timestamp} |        {humidity}%         |    {temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
 	with open("log.txt",'a') as file :
 		file.write(line)
 
@@ -54,7 +56,7 @@ def RPI_loop():
 
 	### licht
 
-	if stunden in ['13','18']: # stunden von 00 bis 23 für licht wählen
+	if stunden in [13,18]: # stunden von 0 bis 23 für licht wählen
 		GPIO_anmachen(LICHT_PIN)
 		licht_an = True
 	else :
@@ -83,7 +85,7 @@ def RPI_loop():
 
 while not stop_error :
 	stop_error = RPI_loop()
-	time.sleep(60)
+	time.sleep(PAUSE_ZEIT)
 
 
 # def main():
