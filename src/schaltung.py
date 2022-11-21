@@ -23,9 +23,7 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(LICHT_PIN, GPIO.OUT)
 GPIO.setup(VENTIL_PIN, GPIO.OUT)
 GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
-GPIO_ausmachen(LICHT_PIN)
-GPIO_ausmachen(VENTIL_PIN)
-GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
+
 stop_error = False
 licht_an = False
 ventil_an = False
@@ -34,7 +32,7 @@ befeuchter_an = True
 ## functions
 
 def update_txt_log(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
-	line = f"\n| {timestamp} |       {'0' if humidity < 10}{humidity}%         |   {'0' if temperature < 10}{temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
+	line = f"\n| {timestamp} |       {'0' if humidity < 10 else ''}{humidity}%         |   {'0' if temperature < 10 else ''}{temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
 	with open("log.txt",'a') as file :
 		file.write(line)
 
@@ -82,6 +80,11 @@ def RPI_loop():
 
 	#breaking_error =     # notfall
 	return breaking_error
+
+############ Program starter hier ##############################
+GPIO_ausmachen(LICHT_PIN)
+GPIO_ausmachen(VENTIL_PIN)
+GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
 
 while not stop_error :
 	stop_error = RPI_loop()
