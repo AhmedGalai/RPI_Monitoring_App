@@ -54,7 +54,7 @@ def RPI_loop():
 
 	### licht
 
-	if stunden in [13,18]: # stunden von 0 bis 23 für licht wählen
+	if stunden in [13,18, 20]: # stunden von 0 bis 23 für licht wählen
 		GPIO_anmachen(LICHT_PIN)
 		licht_an = True
 	else :
