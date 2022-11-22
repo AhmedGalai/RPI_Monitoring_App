@@ -14,12 +14,12 @@ VENTIL_PIN = 26
 DHT_PIN = 4
 LUFT_BEFEUCHTER_PIN = 22
 
-MAX_HUMIDITY = 90
-MIN_HUMIDITY = 50
+MAX_HUMIDITY = 70
+MIN_HUMIDITY = 60
 
-PAUSE_ZEIT = 60  #zeit zwischen messungen in sekunden
+PAUSE_ZEIT = 10  #zeit zwischen messungen in sekunden
 
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(LICHT_PIN, GPIO.OUT)
 GPIO.setup(VENTIL_PIN, GPIO.OUT)
 GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
@@ -32,7 +32,7 @@ befeuchter_an = True
 ## functions
 
 def update_txt_log(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
-	line = f"\n| {timestamp} |       {'0' if humidity < 10 else ''}{humidity}%         |   {'0' if temperature < 10 else ''}{temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
+	line = f"\n| {timestamp} |       {'0' if humidity < 10 else ''}{humidity}%       |   {'0' if temperature < 10 else ''}{temperature}°C   |  {' an' if light_on else 'aus'}  |    {' an' if moisterizer_on else 'aus'}     |  {' an' if ventil_on else 'aus'}   |"
 	with open("log.txt",'a') as file :
 		file.write(line)
 
@@ -47,6 +47,9 @@ def DHT_lesen():
 	return h, t
 
 def RPI_loop():
+	licht_an = False
+	ventil_an = False
+	befeuchter_an = True
 	breaking_error = False
 	feuchtigkeit, temperatur = DHT_lesen()
 	aktuelle_zeit = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -77,7 +80,7 @@ def RPI_loop():
 
 	#### ausgabe zu log.txt
 	update_txt_log(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
-
+	
 	#breaking_error =     # notfall
 	return breaking_error
 
@@ -89,14 +92,14 @@ GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
 while not stop_error :
 	stop_error = RPI_loop()
 	time.sleep(PAUSE_ZEIT)
-
+GPIO.cleanup()
 
 # def main():
 	# stop_error = False
 	# while not stop_error :
 	# 	stop_error = RPI_loop()
 
-#GPIO.cleanup()
+
 
 # if __name__ == '__main__':
 # 	main()
