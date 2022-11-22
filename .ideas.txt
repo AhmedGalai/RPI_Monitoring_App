@@ -1,0 +1,6 @@
+Cam integration
+real time update
+control
+zyklus erstellen
+
+umwandlung zu react oder esp32
