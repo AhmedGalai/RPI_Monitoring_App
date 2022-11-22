@@ -2,3 +2,4 @@
 | Zeit                | Feuchtigkeitsgrad | Temperatur | Licht | Befeuchter | Ventil |
 --------------------------------------------------------------------------------------
 |                     |                   |            |       |            |        |
+
