@@ -1,5 +1,5 @@
 Cam integration
-real time update
+asynchronous real time update and control
 control
 zyklus erstellen
 
