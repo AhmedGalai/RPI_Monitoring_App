@@ -9,20 +9,25 @@ import requests
 import ast
 
 ## setup
-DHT_SENSOR = Adafruit_DHT.DHT22
+DHT_SENSOR = Adafruit_DHT.DHT11
 
-LICHT_PIN = 12
-VENTIL_PIN = 31
+LICHT_PIN = 27
+VENTIL_PIN = 26
 DHT_PIN = 4
-LUFT_BEFEUCHTER_PIN = 11
+LUFT_BEFEUCHTER_PIN = 22
 
+<<<<<<< HEAD
 MAX_HUMIDITY = 90
 MIN_HUMIDITY = 50
 LICHT_ARBEIT_STUNDEN = [13, 18] # stunden von 0 bis 23 für licht wählen
+=======
+MAX_HUMIDITY = 70
+MIN_HUMIDITY = 60
+>>>>>>> main
 
-PAUSE_ZEIT = 60  #zeit zwischen messungen in sekunden
+PAUSE_ZEIT = 10  #zeit zwischen messungen in sekunden
 
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(LICHT_PIN, GPIO.OUT)
 GPIO.setup(VENTIL_PIN, GPIO.OUT)
 GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
@@ -42,7 +47,7 @@ befeuchter_kontroll_an = True
 ## functions
 
 def update_txt_log(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
-	line = f"\n| {timestamp} |       {'0' if humidity < 10 else ''}{humidity}%         |   {'0' if temperature < 10 else ''}{temperature}°C     |  {'an' if light_on else 'aus'}   |     {'an' if moisterizer_on else 'aus'}     |  {'an' if ventil_on else 'aus'}   |"
+	line = f"\n| {timestamp} |       {'0' if humidity < 10 else ''}{humidity}%       |   {'0' if temperature < 10 else ''}{temperature}°C   |  {' an' if light_on else 'aus'}  |    {' an' if moisterizer_on else 'aus'}     |  {' an' if ventil_on else 'aus'}   |"
 	with open("log.txt",'a') as file :
 		file.write(line)
 
@@ -81,6 +86,7 @@ def DHT_lesen():
 	h, t = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
 	return h, t
 
+<<<<<<< HEAD
 def auto_licht():
 	if stunden in LICHT_ARBEIT_STUNDEN:
 		licht_anmachen()
@@ -103,16 +109,29 @@ def auto_humidity(feuchtigkeit, ventil_auto, befeuchter_auto):
 
 def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto):
 
+=======
+def RPI_loop():
+	licht_an = False
+	ventil_an = False
+	befeuchter_an = True
+>>>>>>> main
 	breaking_error = False
 	feuchtigkeit, temperatur = DHT_lesen()
 	aktuelle_zeit = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 	stunden = int(aktuelle_zeit[11:13])
 
 	### licht
+<<<<<<< HEAD
 	if licht_kontoll_auto :
 		auto_licht()
 	elif licht_kontroll_an :
 		licht_anmachen()
+=======
+
+	if stunden in [13,18, 20]: # stunden von 0 bis 23 für licht wählen
+		GPIO_anmachen(LICHT_PIN)
+		licht_an = True
+>>>>>>> main
 	else :
 		licht_ausmachen()
 
@@ -134,16 +153,23 @@ def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kon
 	
 	#### ausgabe zu log.txt
 	update_txt_log(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
-
+	
 	#breaking_error =     # notfall
 	return breaking_error
 
 
+<<<<<<< HEAD
 
 def main():
 	GPIO_ausmachen(LICHT_PIN)
 	GPIO_ausmachen(VENTIL_PIN)
 	GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
+=======
+while not stop_error :
+	stop_error = RPI_loop()
+	time.sleep(PAUSE_ZEIT)
+GPIO.cleanup()
+>>>>>>> main
 
 	while not stop_error :
 		r = ast.literal_eval(requests.get('http://0.0.0.0:5000').text)
@@ -157,8 +183,12 @@ def main():
 		stop_error = RPI_loop(kontroll_daten)
 		time.sleep(PAUSE_ZEIT)
 
+<<<<<<< HEAD
 	GPIO.cleanup()
 	
+=======
+
+>>>>>>> main
 
 ############ Program starter hier ##############################
 if __name__ == '__main__':
