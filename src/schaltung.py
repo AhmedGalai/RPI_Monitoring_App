@@ -47,6 +47,7 @@ def DHT_lesen():
 	return h, t
 
 def RPI_loop():
+	start_zeit = time.time()
 	licht_an = False
 	ventil_an = False
 	befeuchter_an = True
@@ -54,10 +55,9 @@ def RPI_loop():
 	feuchtigkeit, temperatur = DHT_lesen()
 	aktuelle_zeit = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 	stunden = int(aktuelle_zeit[11:13])
-
 	### licht
 
-	if stunden in [13,18, 20]: # stunden von 0 bis 23 für licht wählen
+	if stunden in [13,18, 22]: # stunden von 0 bis 23 für licht wählen
 		GPIO_anmachen(LICHT_PIN)
 		licht_an = True
 	else :
@@ -78,10 +78,12 @@ def RPI_loop():
 		GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
 		befeuchter_an = True
 
-	#### ausgabe zu log.txt
+	#### ausgabe zu log.txt 
 	update_txt_log(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
 	
 	#breaking_error =     # notfall
+	if (time.time() - start_zeit < PAUSE_ZEIT):
+		time.sleep(PAUSE_ZEIT - time.time() + start_zeit)
 	return breaking_error
 
 ############ Program starter hier ##############################
@@ -92,6 +94,7 @@ GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
 while not stop_error :
 	stop_error = RPI_loop()
 	time.sleep(PAUSE_ZEIT)
+
 GPIO.cleanup()
 
 # def main():
