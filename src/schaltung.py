@@ -7,7 +7,7 @@ import datetime
 import Adafruit_DHT
 
 ## setup
-DHT_SENSOR = Adafruit_DHT.DHT22
+DHT_SENSOR = Adafruit_DHT.DHT11
 
 LICHT_PIN = 27
 VENTIL_PIN = 26
