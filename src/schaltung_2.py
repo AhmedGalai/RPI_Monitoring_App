@@ -70,7 +70,7 @@ def get_data():
 	ventil_kontroll_auto = r['ventil_auto']
 	befeuchter_kontroll_an = r['befeuchter_an']
 	befeuchter_kontroll_auto = r['befeuchter_auto']
-	return [licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto]
+	return licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto
 
 def post_data(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
 
@@ -176,7 +176,7 @@ def main():
 	while not stop_error :
 		kontroll_daten = get_data()
 		print(kontroll_daten)
-		stop_error = RPI_loop(kontroll_daten[1:-1])
+		stop_error = RPI_loop(kontroll_daten)
 		time.sleep(PAUSE_ZEIT)
 
 	GPIO.cleanup()
