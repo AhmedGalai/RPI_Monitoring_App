@@ -10,6 +10,9 @@ import ast
 import json
 from rich import print
 import subprocess
+from flask import g
+from app import app, init_db, update_db
+import sqlite3
 
 DATABASE = '/home/pi/Desktop/RPI_Monitoring_App/src/sql.db'
 ## setup
@@ -167,22 +170,13 @@ def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kon
 	print(posted_data)
 	breaking_error = False
 	#breaking_error =     # notfall
+	with app.app_context():
+		update_db(temperatur, feuchtigkeit, aktuelle_zeit)
 	return breaking_error
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
-def query_db(query, args=(), one=False):
-    cur = get_db().execute(query, args)
-    rv = cur.fetchall()
-    cur.close()
-    return (rv[0] if rv else None) if one else rv
-
 def main():
-	query_db('CREATE TABLE Zyklus ( temperatur, feuchtigkeit, zeit, current )', [], one=True)
-	query_db('INSERT INTO Zyklus VALUES(?, ?, ?, ?)', [0, 0, 0, 1], one=True)
+	with app.app_context():
+		init_db()
 	GPIO.setwarnings(False)
 	GPIO.setmode(GPIO.BCM)
 	GPIO.setup(LICHT_PIN, GPIO.OUT)
@@ -210,9 +204,13 @@ def main():
 		stop_error = RPI_loop(*kontroll_daten)
 		time.sleep(PAUSE_ZEIT)
 
-	GPIO.cleanup()
-	subprocess.run(['rm','sql.db'])
 
 ############ Program starter hier ##############################
 if __name__ == '__main__':
-	main()
+	try:
+		main()
+	except KeyboardInterrupt:
+		pass
+
+	GPIO.cleanup()
+	subprocess.run(['rm','sql.db'])

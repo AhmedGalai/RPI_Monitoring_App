@@ -31,12 +31,22 @@ def query_db(query, args=(), one=False):
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+def init_db():
+	query_db("""CREATE TABLE IF NOT EXISTS Zyklus (temperatur float, feuchtigkeit float, zeit text, current int)""", [], one=True)
+	query_db('INSERT INTO Zyklus VALUES(?, ?, ?, ?)', [0, 0, 0, 1], one=True)
 
+
+def update_db(temperatur, feuchtigkeit, zeit):
+	query_db('Update Zyklus set temperatur = ? where current = 1', [temperatur], one=True)
+	query_db('Update Zyklus set feuchtigkeit = ? where current = 1', [feuchtigkeit], one=True)
+	query_db('Update Zyklus set zeit = ? where current = 1', [zeit], one=True)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
 	if request.method == 'GET': #### get most recent values from db
 		zyklus = query_db('select * from Zyklus where current = 1', [], one=True)
+		print(zyklus)
+
 		temperatur = zyklus.temperatur
 		feuchtigkeit = zyklus.feuchtigkeit
 		temperatur = 'nicht verbunden'
@@ -50,9 +60,7 @@ def index():
 		timestamp = data['timestamp']
 		temperatur = data['temperature']
 		feuchtigkeit = data['humidity']
-		query_db('Update Zyklus set temperatur = ? where current = 1', [temperatur], one=True)
-		query_db('Update Zyklus set feuchtigkeit = ? where current = 1', [feuchtigkeit], one=True)
-
+		update_db(temperatur, feuchtigkeit, timestamp)
 		#### update current db values
 
 
