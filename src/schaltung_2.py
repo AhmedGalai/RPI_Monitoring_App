@@ -7,7 +7,6 @@ import datetime
 import Adafruit_DHT
 import requests
 import ast
-from bs4 import BeautifulSoup
 
 ## setup
 DHT_SENSOR = Adafruit_DHT.DHT11
