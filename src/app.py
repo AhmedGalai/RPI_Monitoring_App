@@ -16,13 +16,11 @@ def index():
 	#with open('log.txt','r') as log :
 		#temperatur = log[:]
 		#feuchtigkeit = log[:]
-	return render_template("index.html",{
-		'TEMPERATUR': temperatur,
-		'FEUCHTIGKEIT': feuchtigkeit
-	})
+	return render_template("index.html",TEMPERATUR=temperatur,FEUCHTIGKEIT=feuchtigkeit)
 
 @app.route("/kontroll")
 def kontroll():
+	# obviously should be taken from input instead
 	kontroll_daten = {
 		'licht_an': True,
 		'licht_auto' : True,
@@ -31,7 +29,7 @@ def kontroll():
 		'befeuchter_an': True,
 		'befeuchter_auto' : True,
 	}
-	kontroll_daten_text = "kontroll_daten = {'licht_an': True,'licht_auto' : True,'ventil_an': True,'ventil_auto' : True,'befeuchter_an': True,'befeuchter_auto' : True,}"
+	kontroll_daten_text = "{'licht_an': True,'licht_auto' : True,'ventil_an': True,'ventil_auto' : True,'befeuchter_an': True,'befeuchter_auto' : True,}"
 	return kontroll_daten_text
 
 
