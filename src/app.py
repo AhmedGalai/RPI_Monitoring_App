@@ -36,13 +36,11 @@ def query_db(query, args=(), one=False):
 @app.route('/', methods=['GET', 'POST'])
 def index():
 	if request.method == 'GET': #### get most recent values from db
-		if get_db() :
-			zyklus = query_db('select * from Zyklus where current = 1', [], one=True)
-			temperatur = zyklus.temperatur
-			feuchtigkeit = zyklus.feuchtigkeit
-		else:
-			temperatur = 'nicht verbunden'
-			feuchtigkeit = 'nicht verbunden'
+		zyklus = query_db('select * from Zyklus where current = 1', [], one=True)
+		temperatur = zyklus.temperatur
+		feuchtigkeit = zyklus.feuchtigkeit
+		temperatur = 'nicht verbunden'
+		feuchtigkeit = 'nicht verbunden'
 		#with open('log.txt','r') as log :
 			#temperatur = log[:]
 			#feuchtigkeit = log[:]
@@ -52,9 +50,8 @@ def index():
 		timestamp = data['timestamp']
 		temperatur = data['temperature']
 		feuchtigkeit = data['humidity']
-		if get_db() :
-			query_db('Update Zyklus set temperatur = ? where current = 1', [temperatur], one=True)
-			query_db('Update Zyklus set feuchtigkeit = ? where current = 1', [feuchtigkeit], one=True)
+		query_db('Update Zyklus set temperatur = ? where current = 1', [temperatur], one=True)
+		query_db('Update Zyklus set feuchtigkeit = ? where current = 1', [feuchtigkeit], one=True)
 
 		#### update current db values
 
@@ -79,10 +76,6 @@ def kontroll():
 
 
 if __name__ == '__main__':
-
-	query_db('CREATE TABLE Zyklus ( temperatur, feuchtigkeit, zeit, current )', [], one=True)
-	query_db('INSERT INTO Zyklus VALUES(?, ?, ?, ?)', [0, 0, 0, 1], one=True)
-
 
 	app.run(debug=True)
 
