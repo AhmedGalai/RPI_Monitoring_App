@@ -72,7 +72,7 @@ def get_data():
 	befeuchter_kontroll_auto = r['befeuchter_auto']
 	return licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto
 
-def post_data(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
+def post_data(timestamp, humidity, temperature):
 
 	client = requests.session()
 
@@ -85,8 +85,8 @@ def post_data(timestamp, humidity, temperature, light_on, moisterizer_on, ventil
 	    # older versions
 	    csrftoken = client.cookies['csrf']
 
-	data = dict(timestamp=timestamp, humidity=humidity, temperature=temperature, l_on=light_on, m_on=moisterizer_on, v_on=ventil_on, csrfmiddlewaretoken=csrftoken)
-	r = client.post(URL, data=data, headers=dict(Referer=URL))
+	data = dict(timestamp=timestamp, humidity=humidity, temperature=temperature, csrfmiddlewaretoken=csrftoken)
+	r = client.post(f"{URL}", data=data, headers=dict(Referer=URL))
 
 
 def DHT_lesen():
@@ -156,6 +156,7 @@ def main():
 	GPIO.setup(LICHT_PIN, GPIO.OUT)
 	GPIO.setup(VENTIL_PIN, GPIO.OUT)
 	GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
+	#GPIO.setwarnings(False)
 
 	GPIO_ausmachen(LICHT_PIN)
 	GPIO_ausmachen(VENTIL_PIN)
@@ -175,8 +176,9 @@ def main():
 
 	while not stop_error :
 		kontroll_daten = get_data()
+		print("kontroll_daten: ")
 		print(kontroll_daten)
-		stop_error = RPI_loop(kontroll_daten)
+		stop_error = RPI_loop(*kontroll_daten)
 		time.sleep(PAUSE_ZEIT)
 
 	GPIO.cleanup()

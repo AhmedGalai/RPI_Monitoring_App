@@ -9,14 +9,25 @@ app = Flask(__name__)
 
 # event = threading.event
 
-@app.route("/")
+@app.route('/', methods=['GET', 'POST'])
 def index():
-	temperatur = 0
-	feuchtigkeit = 0
-	#with open('log.txt','r') as log :
-		#temperatur = log[:]
-		#feuchtigkeit = log[:]
-	return render_template("index.html",TEMPERATUR=temperatur,FEUCHTIGKEIT=feuchtigkeit)
+    if request.method == 'GET': #### get most recent values from db
+        temperatur = 0
+        feuchtigkeit = 0
+        #with open('log.txt','r') as log :
+        	#temperatur = log[:]
+        	#feuchtigkeit = log[:]
+        return render_template("index.html",TEMPERATUR=temperatur,FEUCHTIGKEIT=feuchtigkeit)
+    if request.method == 'POST': #### update the values
+    	timestamp = request.data['timestamp']
+        temperatur = request.data['temperature']
+        feuchtigkeit = request.data['humidity']
+        #### update current db values
+
+
+
+
+        return render_template("index.html",TEMPERATUR=temperatur,FEUCHTIGKEIT=feuchtigkeit)
 
 @app.route("/kontroll")
 def kontroll():
