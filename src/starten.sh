@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-cd ~/Desktop/RPI_beobachtungsapp/src
+cd /home/pi/Desktop/RPI_Monitoring_App/src
 source ../env/bin/activate
 
 python cleanup.py

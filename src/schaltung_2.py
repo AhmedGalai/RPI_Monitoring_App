@@ -1,5 +1,5 @@
-#!/env/bin/python3
 
+#!/env/bin/python3
 
 import RPi.GPIO as GPIO
 import time
@@ -7,6 +7,8 @@ import datetime
 import Adafruit_DHT
 import requests
 import ast
+import json
+from rich import print
 
 ## setup
 DHT_SENSOR = Adafruit_DHT.DHT11
@@ -81,19 +83,22 @@ def post_data(timestamp, humidity, temperature):
 	if 'csrftoken' in client.cookies:
 	    # Django 1.6 and up
 	    csrftoken = client.cookies['csrftoken']
-	else:
+	elif 'csrf' in client.cookies:
 	    # older versions
 	    csrftoken = client.cookies['csrf']
+	else :
+	    csrftoken = ''
 
 	data = dict(timestamp=timestamp, humidity=humidity, temperature=temperature, csrfmiddlewaretoken=csrftoken)
-	r = client.post(f"{URL}", data=data, headers=dict(Referer=URL))
+	r = client.post(f"{URL}", json=data, headers=dict(Referer=URL))
+	return r
 
 
 def DHT_lesen():
 	h, t = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
 	return h, t
 
-def auto_licht():
+def auto_licht(stunden):
 	if stunden in LICHT_ARBEIT_STUNDEN:
 		licht_anmachen()
 	else :
@@ -114,14 +119,16 @@ def auto_humidity(feuchtigkeit, ventil_auto, befeuchter_auto):
 
 
 def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto):
-
+	licht_an = True
+	ventil_an = True
+	befeuchter_an = True
 	feuchtigkeit, temperatur = DHT_lesen()
 	aktuelle_zeit = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 	stunden = int(aktuelle_zeit[11:13])
 
 	### licht
-	if licht_kontoll_auto :
-		auto_licht()
+	if licht_kontroll_auto :
+		auto_licht(stunden)
 	elif licht_kontroll_an :
 		licht_anmachen()
 	else :
@@ -144,19 +151,27 @@ def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kon
 
 	
 	#### ausgabe zu log.txt
-	update_txt_log(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
-	post_data(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
+	#update_txt_log(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
 	
+	try:
+		res = post_data(aktuelle_zeit, feuchtigkeit, temperatur)
+		posted_data = res.json()
+	except Exception as e:
+		print("error while posting data to webApp: ")
+		print(f"[red]{e}[/red]")
+		posted_data = None
+	print("posted data to webapp: ")
+	print(posted_data)
+	breaking_error = False
 	#breaking_error =     # notfall
 	return breaking_error
 
 def main():
-	
+	GPIO.setwarnings(False)
 	GPIO.setmode(GPIO.BCM)
 	GPIO.setup(LICHT_PIN, GPIO.OUT)
 	GPIO.setup(VENTIL_PIN, GPIO.OUT)
 	GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
-	#GPIO.setwarnings(False)
 
 	GPIO_ausmachen(LICHT_PIN)
 	GPIO_ausmachen(VENTIL_PIN)
@@ -167,16 +182,14 @@ def main():
 	ventil_an = False
 	befeuchter_an = True
 
-	licht_kontroll_auto = True
-	ventil_kontroll_auto = True
-	befeuchter_kontroll_auto = True
-	licht_kontroll_an = True
-	ventil_kontroll_an = True
-	befeuchter_kontroll_an = True
-
 	while not stop_error :
-		kontroll_daten = get_data()
-		print("kontroll_daten: ")
+		try:
+			kontroll_daten = get_data()
+		except Exception as e:
+			print("error while getting control data: ")
+			print(f"[red]{e}[/red]")
+			kontroll_daten = (True, True, True, True, True, True)
+		print("erworbene kontroll daten: ")
 		print(kontroll_daten)
 		stop_error = RPI_loop(*kontroll_daten)
 		time.sleep(PAUSE_ZEIT)
