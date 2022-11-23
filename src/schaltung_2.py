@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/env/bin/python3
 
 
 import RPi.GPIO as GPIO
@@ -7,6 +7,7 @@ import datetime
 import Adafruit_DHT
 import requests
 import ast
+from bs4 import BeautifulSoup
 
 ## setup
 DHT_SENSOR = Adafruit_DHT.DHT11
@@ -22,22 +23,8 @@ MIN_HUMIDITY = 60
 
 PAUSE_ZEIT = 10  #zeit zwischen messungen in sekunden
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(LICHT_PIN, GPIO.OUT)
-GPIO.setup(VENTIL_PIN, GPIO.OUT)
-GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
+URL = 'http://0.0.0.0:5000'
 
-stop_error = False
-licht_an = False
-ventil_an = False
-befeuchter_an = True
-
-licht_kontroll_auto = True
-ventil_kontroll_auto = True
-befeuchter_kontroll_auto = True
-licht_kontroll_an = True
-ventil_kontroll_an = True
-befeuchter_kontroll_an = True
 
 ## functions
 
@@ -76,6 +63,32 @@ def befeuchter_ausmachen():
 	GPIO_ausmachen(LUFT_BEFEUCHTER_PIN)
 	befeuchter_an = False
 
+def get_data():
+	r = ast.literal_eval(requests.get(f"{URL}/kontroll").text)
+	licht_kontroll_an = r['licht_an']
+	licht_kontroll_auto = r['licht_auto']
+	ventil_kontroll_an = r['ventil_an']
+	ventil_kontroll_auto = r['ventil_auto']
+	befeuchter_kontroll_an = r['befeuchter_an']
+	befeuchter_kontroll_auto = r['befeuchter_auto']
+	return [licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto]
+
+def post_data(timestamp, humidity, temperature, light_on, moisterizer_on, ventil_on):
+
+	client = requests.session()
+
+	# Retrieve the CSRF token first
+	client.get(URL)  # sets cookie
+	if 'csrftoken' in client.cookies:
+	    # Django 1.6 and up
+	    csrftoken = client.cookies['csrftoken']
+	else:
+	    # older versions
+	    csrftoken = client.cookies['csrf']
+
+	data = dict(timestamp=timestamp, humidity=humidity, temperature=temperature, l_on=light_on, m_on=moisterizer_on, v_on=ventil_on, csrfmiddlewaretoken=csrftoken)
+	r = client.post(URL, data=data, headers=dict(Referer=URL))
+
 
 def DHT_lesen():
 	h, t = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
@@ -103,10 +116,6 @@ def auto_humidity(feuchtigkeit, ventil_auto, befeuchter_auto):
 
 def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto):
 
-	licht_an = False
-	ventil_an = False
-	befeuchter_an = True
-	breaking_error = False
 	feuchtigkeit, temperatur = DHT_lesen()
 	aktuelle_zeit = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 	stunden = int(aktuelle_zeit[11:13])
@@ -137,24 +146,36 @@ def RPI_loop(licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kon
 	
 	#### ausgabe zu log.txt
 	update_txt_log(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
+	post_data(aktuelle_zeit, feuchtigkeit, temperatur, licht_an, befeuchter_an, ventil_an)
 	
 	#breaking_error =     # notfall
 	return breaking_error
 
 def main():
-	stop_error = False
+	
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(LICHT_PIN, GPIO.OUT)
+	GPIO.setup(VENTIL_PIN, GPIO.OUT)
+	GPIO.setup(LUFT_BEFEUCHTER_PIN, GPIO.OUT)
+
 	GPIO_ausmachen(LICHT_PIN)
 	GPIO_ausmachen(VENTIL_PIN)
 	GPIO_anmachen(LUFT_BEFEUCHTER_PIN)
+
+	stop_error = False
+	licht_an = False
+	ventil_an = False
+	befeuchter_an = True
+
+	licht_kontroll_auto = True
+	ventil_kontroll_auto = True
+	befeuchter_kontroll_auto = True
+	licht_kontroll_an = True
+	ventil_kontroll_an = True
+	befeuchter_kontroll_an = True
+
 	while not stop_error :
-		r = ast.literal_eval(requests.get('http://0.0.0.0:5000').text)
-		licht_kontroll_an = r['licht_an']
-		licht_kontroll_auto = r['licht_auto']
-		ventil_kontroll_an = r['ventil_an']
-		ventil_kontroll_auto = r['ventil_auto']
-		befeuchter_kontroll_an = r['befeuchter_an']
-		befeuchter_kontroll_auto = r['befeuchter_auto']
-		kontroll_daten = [licht_kontroll_an,licht_kontroll_auto,ventil_kontroll_an,ventil_kontroll_auto,befeuchter_kontroll_an,befeuchter_kontroll_auto]
+		kontroll_daten = get_data()
 		stop_error = RPI_loop(kontroll_daten)
 		time.sleep(PAUSE_ZEIT)
 
