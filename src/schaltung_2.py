@@ -176,7 +176,7 @@ def main():
 	while not stop_error :
 		kontroll_daten = get_data()
 		print(kontroll_daten)
-		stop_error = RPI_loop(kontroll_daten)
+		stop_error = RPI_loop(kontroll_daten[1:-1])
 		time.sleep(PAUSE_ZEIT)
 
 	GPIO.cleanup()
