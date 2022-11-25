@@ -13,15 +13,24 @@
 const char* ssid = "FRITZ!Box 7530 PQ";
 const char* password = "41120895611457227941";
 
-#define DHTPIN 27     // Digital pin connected to the DHT sensor
-#define Ventil 26
+#define DHTPIN 26     // Digital pin connected to the DHT sensor
+#define VENTIL 27
+#define VERNEBLER 14
+#define LICHT 12
 
 // Uncomment the type of sensor in use:
-//#define DHTTYPE    DHT11     // DHT 11
-#define DHTTYPE    DHT22     // DHT 22 (AM2302)
+#define DHTTYPE    DHT11     // DHT 11
+//#define DHTTYPE    DHT22     // DHT 22 (AM2302)
 //#define DHTTYPE    DHT21     // DHT 21 (AM2301)
-
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 0;
+const int   daylightOffset_sec = 3600;
 DHT dht(DHTPIN, DHTTYPE);
+float tem, hum;
+int vernebler_auto = 1;
+int licht_auto = 1;
+int ventil_auto = 1;
+char timeHour[3];
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -38,7 +47,7 @@ String readDHTTemperature() {
     return "--";
   }
   else {
-    Serial.println(t);
+    //Serial.println(t);
     return String(t);
   }
 }
@@ -51,92 +60,51 @@ String readDHTHumidity() {
     return "--";
   }
   else {
-    Serial.println(h);
+    //Serial.println(h);
     return String(h);
   }
 }
 
-const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE HTML><html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-  <style>
-    html {
-     font-family: Arial;
-     display: inline-block;
-     margin: 0px auto;
-     text-align: center;
-    }
-    h2 { font-size: 3.0rem; }
-    p { font-size: 3.0rem; }
-    .units { font-size: 1.2rem; }
-    .dht-labels{
-      font-size: 1.5rem;
-      vertical-align:middle;
-      padding-bottom: 15px;
-    }
-  </style>
-</head>
-<body>
-  <h2>ESP32 DHT Server</h2>
-  <p>
-    <i class="fas fa-thermometer-half" style="color:#059e8a;"></i> 
-    <span class="dht-labels">Temperature</span> 
-    <span id="temperature">%TEMPERATURE%</span>
-    <sup class="units">&deg;C</sup>
-  </p>
-  <p>
-    <i class="fas fa-tint" style="color:#00add6;"></i> 
-    <span class="dht-labels">Humidity</span>
-    <span id="humidity">%HUMIDITY%</span>
-    <sup class="units">&percnt;</sup>
-  </p>
-</body>
-<script>
-setInterval(function ( ) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("temperature").innerHTML = this.responseText;
-    }
-  };
-  xhttp.open("GET", "/temperature", true);
-  xhttp.send();
-}, 10000 ) ;
 
-setInterval(function ( ) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("humidity").innerHTML = this.responseText;
-    }
-  };
-  xhttp.open("GET", "/humidity", true);
-  xhttp.send();
-}, 10000 ) ;
-</script>
-</html>)rawliteral";
+void autoLicht() {
+  if (timeHour == "22") {
+    digitalWrite(LICHT, 1);
+  } else {
+    digitalWrite(LICHT, 0);
+  }
+}
 
-// Replaces placeholder with DHT values
-String processor(const String& var){
-  //Serial.println(var);
-  if(var == "TEMPERATURE"){
-    return readDHTTemperature();
+void autoVernebler() {
+  if (hum > 89) {
+    digitalWrite(VERNEBLER, 0);
+  } else {
+    digitalWrite(VERNEBLER, 1);
   }
-  else if(var == "HUMIDITY"){
-    return readDHTHumidity();
+}
+
+void autoVentil() {
+  if (hum > 91) {
+    digitalWrite(VENTIL, 1);
+  } else {
+    digitalWrite(VENTIL, 0);
   }
-  return String();
+}
+
+String tempdata(){
+    return readDHTTemperature()+','+readDHTHumidity();
 }
 
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
-  pinMode(Ventil,OUTPUT);
-  digitalWrite(Ventil,0);
+  pinMode(VENTIL,OUTPUT);
+  digitalWrite(VENTIL,0);
+  pinMode(VERNEBLER,OUTPUT);
+  digitalWrite(VERNEBLER,0);
+  pinMode(LICHT,OUTPUT);
+  digitalWrite(LICHT,0);
   dht.begin();
-  
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -149,23 +117,82 @@ void setup(){
 
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
+    Serial.println("Messung:");
+    Serial.println(tempdata().c_str());
+    request->send_P(200, "text/plain", tempdata().c_str());
   });
-  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", readDHTTemperature().c_str());
+  server.on("/1", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 1");
+    autoVernebler();
+    vernebler_auto = 1;
   });
-  server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/plain", readDHTHumidity().c_str());
+  server.on("/2", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 2");
+    digitalWrite(VERNEBLER,1);
+    vernebler_auto = 0;
   });
-
+  server.on("/3", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 3");
+    digitalWrite(VERNEBLER,0);
+    vernebler_auto = 0;
+  });
+  server.on("/4", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 4");
+    autoVentil();
+    ventil_auto = 1;
+  });
+  server.on("/5", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 5");
+    digitalWrite(VENTIL,1);
+    ventil_auto = 0;
+  });
+  server.on("/6", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 6");
+    digitalWrite(VENTIL,0);
+    ventil_auto = 0;
+  });
+  server.on("/7", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 7");
+    autoLicht();
+    licht_auto = 1;
+  });
+  server.on("/8", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 8");
+    digitalWrite(LICHT,1);
+    licht_auto = 0;
+  });
+  server.on("/9", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.println("Steuerung: 9");
+    digitalWrite(LICHT,0);
+    licht_auto = 0;
+  });
   // Start server
   server.begin();
 }
  
 void loop(){
- if (readDHTHumidity().toInt()>70){
+  struct tm timeinfo;
+    if(!getLocalTime(&timeinfo)){
+      Serial.println("Failed to obtain time");
+      return;
+    }
+  char timeHour[3];
+    strftime(timeHour,3, "%H", &timeinfo); 
+  tem = dht.readTemperature();
+  hum = dht.readHumidity();
+  if (licht_auto) {
+    autoLicht();
+  }
+  if (ventil_auto) {
+    autoVentil();
+  }
+  if (vernebler_auto) {
+    autoVernebler();
+  }
+ /*if (readDHTHumidity().toInt()>70){
    digitalWrite(Ventil,1);
  } else if (readDHTHumidity().toInt()<60){
    digitalWrite(Ventil,0);
- }
+ }*/
+  delay(1000);
 }

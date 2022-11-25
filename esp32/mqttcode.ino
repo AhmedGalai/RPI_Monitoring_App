@@ -3,10 +3,12 @@
 #include <ESP8266WiFi.h> //library for using ESP8266 WiFi 
 #include <PubSubClient.h> //library for MQTT
 #include <ArduinoJson.h> //library for Parsing JSON
- 
+#include "time.h"
 //defining Pins
 #define DHTPIN 5
-#define LED D2
+#define LICHT D2
+#define VENTIL 3
+#define VERNEBLER 10
  
 //DHT parameters
 #define DHTTYPE    DHT11     // DHT 11
@@ -14,18 +16,21 @@ DHT_Unified dht(DHTPIN, DHTTYPE);
 uint32_t delayMS;
  
 //MQTT Credentials
-const char* ssid = "ssid";//setting your ap ssid
-const char* password = "password";//setting your ap psk
+const char* ssid = "FRITZ!Box 7530 PQ";//setting your ap ssid
+const char* password = "41120895611457227941";//setting your ap psk
 const char* mqttServer = "iot.reyax.com"; //MQTT URL
 const char* mqttUserName = "mqtt username";  // MQTT username
 const char* mqttPwd = "mqtt password";  // MQTT password
 const char* clientID = "username0001"; // client id username+0001
-const char* topic = "Tempdata"; //publish topic
+const char* topic = "Messung"; //publish topic
  
 //parameters for using non-blocking delay
 unsigned long previousMillis = 0;
 const long interval = 5000;
- 
+const long  gmtOffset_sec = 0;
+const int   daylightOffset_sec = 3600;
+
+
 String msgStr = "";      // MQTT message buffer
  
 float temp, hum;
@@ -57,7 +62,7 @@ void reconnect() {
     if (client.connect(clientID, mqttUserName, mqttPwd)) {
       Serial.println("MQTT connected");
  
-      client.subscribe("lights");
+      client.subscribe("Steuerung");
       Serial.println("Topic Subscribed");
     }
     else {
@@ -69,6 +74,30 @@ void reconnect() {
  
   }
  
+}
+
+void autoLicht() {
+  if (timeHour == '22') {
+    digitalWrite(LICHT, 1);
+  } else {
+    digitalWrite(LICHT, 0);
+  }
+}
+
+void autoVernebler() {
+  if (hum > 90) {
+    digitalWrite(VERNEBLER, 0);
+  } else {
+    digitalWrite(VERNEBLER, 1);
+  }
+}
+
+void autoVentil() {
+  if (hum > 90) {
+    digitalWrite(VERNEBLER, 1);
+  } else {
+    digitalWrite(VERNEBLER, 0);
+  }
 }
  
 //subscribe call back
@@ -88,13 +117,44 @@ void callback(char*topic, byte* payload, unsigned int length) {
   Serial.println("-----------------------");
   Serial.println(data);
  
-if(data=="ON"){
-  Serial.println("LED");
- digitalWrite(LED, HIGH);
-}
-else{
-  digitalWrite(LED, LOW);
-}
+switch(data=="1"){
+  case '1' : {
+    Serial.println("VERNEBLER_AUTO");
+    autoVernebler();
+  }
+  case '2' : {
+    Serial.println("VERNEBLER_AN");
+    digitalWrite(VERNEBLER, 1);
+  }
+  case '3' : {
+    Serial.println("VERNEBLER_AUS");
+    digitalWrite(VERNEBLER, 0);
+  }
+  case '4' : {
+    Serial.println("VENTIL_AUTO");
+    autoVentil();
+  }
+  case '5' : {
+    Serial.println("VENTIL_AN");
+    digitalWrite(VENTIL, 1);
+  }
+  case '6' : {
+    Serial.println("VENTIL_AUS");
+    digitalWrite(VENTIL, 0);
+  }
+  case '7' : {
+    Serial.println("LICHT_AUTO");
+    autoLicht();
+  }
+  case '8' : {
+    Serial.println("LICHT_AN");
+    digitalWrite(LICHT, 1);
+  }
+  case '9' : {
+    Serial.println("LICHT_AUS");
+    digitalWrite(LICHT, 0);
+  }
+  
 }
  
  
@@ -107,8 +167,13 @@ void setup() {
   dht.temperature().getSensor(&sensor);
   dht.humidity().getSensor(&sensor);
  
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
+  pinMode(LICHT, OUTPUT);
+  digitalWrite(LICHT, LOW);
+  pinMode(VERNEBLER, OUTPUT);
+  digitalWrite(VERNEBLER, LOW);
+  pinMode(VENTIL, OUTPUT);
+  digitalWrite(VENTIL, LOW);
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
  
   setup_wifi();
  
@@ -118,6 +183,14 @@ void setup() {
 }
  
 void loop() {
+  struct tm timeinfo;
+    if(!getLocalTime(&timeinfo)){
+      Serial.println("Failed to obtain time");
+      return;
+    }
+  char timeHour[3];
+    strftime(timeHour,3, "%H", &timeinfo); 
+  
   if (!client.connected()) { //if client is not connected
     reconnect(); //try to reconnect
   }
